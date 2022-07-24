@@ -1,7 +1,9 @@
 import netCDF4
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+import cartopy.crs as ccrs
+
+#conda activate sst
 
 # dqdt requires a list of the time derivatives for q, stored 
 # in order from present to the past
@@ -98,14 +100,14 @@ for lat_b in lat_bs:
 
 ew_dists = np.array(ew_dists)
 
-print ew_dists
+print(ew_dists)
 
 trpz_areas = ns_dist*(ew_dists[1:] + ew_dists[:-1])/2
 
 areas = np.rot90(np.tile(trpz_areas, 64).reshape((RES_Y, RES_X)))
 masses = RHO_0*DEPTH*areas
 
-print areas
+print(areas)
 
 #convert lats/lons to meshgrid and radians
 
@@ -133,7 +135,7 @@ dvdta = [0.,0.,0.] # for v...
 dTdta = [0.,0.,0.] # for T...
 advord = 3
 aborder = 3
-for x in xrange(0, ITERS):
+for x in range(0, ITERS):
 	phi += 2*np.pi/YEAR * DT #year angle
 	#CALCULATE RADIATION
 	#sfc in (insolation)
@@ -154,7 +156,7 @@ for x in xrange(0, ITERS):
 	E_atm2sfc_p_sqm = EMISSIVITY*SB*atm_temp**4 * DT
 	ssts += E_atm2sfc_p_sqm*areas/(masses*4184.)
 
-	print sfc_temp
+	print(sfc_temp)
 	mean_ssts.append(sfc_temp)
 	atm_temps.append(atm_temp)
 
@@ -166,6 +168,7 @@ for x in xrange(0, ITERS):
 	dvdt = - f*us #-1/RHO_0*dpdy
 	
 	#CALCULATE ADVECTION
+	'''
 	dudt += advect(us,us,ew_dists,advord) #nonlinear advection term
 	dvdt += advect(vs,vs,ns_dist,advord) #nonlinear advection term
 
@@ -185,15 +188,14 @@ for x in xrange(0, ITERS):
 	#fix ew_dists so advect() only gets one value
 	#fix u, v grid sizes
 	#make f a proper grid
+	'''
 
 	#plot
 	if x % 2400 == 0:
 		taslevels = np.arange(-40, 48, 3)
 
-		m = Basemap(projection='cyl', llcrnrlat=-90,urcrnrlat=90,llcrnrlon=0,urcrnrlon=360,resolution='l')
-
 		fig = plt.figure(figsize=(18.6, 10.5))
-		ax = fig.add_axes((0,0,1,1))
+		ax = plt.axes(projection=ccrs.PlateCarree())
 		ax.set_axis_off()
 
 		#m.drawcoastlines()
@@ -203,12 +205,12 @@ for x in xrange(0, ITERS):
 		con_temp = plt.contour(lons, lats, ssts-273.15, levels=taslevels, linewidths=1, colors='k', zorder=1)
 		plt.clabel(con_temp, con_temp.levels, fmt='%d')
 
-		plt.colorbar(fraction=0.025, pad=0.01)
+		#plt.colorbar(fraction=0.025, pad=0.01)
 	
 		plt.savefig("/home/kalassak/sst/sst_" + str(x/24) + ".png", bbox_inches='tight', pad_inches=0, dpi=100)
 		plt.close()
 
-		print "plot for " + str(x/24) + " generated"
+		print("plot for " + str(x/24) + " generated")
 
 #plot diagnostics
 fig = plt.figure(figsize=(18.6, 10.5))
